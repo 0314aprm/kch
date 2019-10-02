@@ -31,9 +31,10 @@ import Modal from "@material-ui/core/Modal";
 import Button from '@material-ui/core/Button';
 import MenuItem from '@material-ui/core/MenuItem';
 
+import { connect } from 'react-redux';
 import jwt from "jsonwebtoken";
 import api from "./utils/api";
-
+import { loginUser, signupUser } from "./actions";
 
 const styles = theme => ({
   paper: {
@@ -305,76 +306,65 @@ function LoginForm(props) {
   }, []);
 
   return <div>
+    <div>
+      username:
+      {props.userData.username}
+    </div>
     <form className={classes.container} noValidate autoComplete="off">
-      <TextField
-        id="standard-name"
-        label="ユーザー名"
-        className={classes.textField}
-        type="username"
-        value={username}
-        onChange={(e) => {SetUsername(e.target.value)}}
-        margin="normal"
-      />
-      <TextField
-        id="standard-name"
-        label="パスワード"
-        className={classes.textField}
-        type="password"
-        value={password}
-        onChange={(e) => {SetPassword(e.target.value)}}
-        margin="normal"
-      />
-      <Button variant="contained" className={classes.button} onClick={
-        () => {
-          var formData = new FormData();
-          formData.append("username", username);
-          formData.append("password", password);
-          fetch(api.BASE_URL + "signup", {
-            method: 'POST',
-            body: formData
-          }).then(r => r.json()).then(json => {
-            const jwtData = jwt.decode(json.token);
-            console.log(jwtData);
-            sessionStorage.setItem('token', json.token);
-          })
-        }
-      }>
-        新規登録
-      </Button>
-      <Button variant="contained" className={classes.button} onClick={
-        () => {
-          var formData = new FormData();
-          formData.append("username", username);
-          formData.append("password", password);
-          fetch(api.BASE_URL + "login", {
-            method: 'POST',
-            body: formData
-          }).then(r => r.json()).then(json => {
-            const jwtData = jwt.decode(json.token);
-            console.log(jwtData);
-            sessionStorage.setItem('token', json.token);
-          })
-        }
-      }>
-        ログイン
-      </Button>
-      <Button variant="contained" className={classes.button} onClick={
-        () => {
-          const token = sessionStorage.getItem('token');
-          fetch(api.BASE_URL + "me", {
-            method: 'POST',
-            mode: "cors",
-            headers: {
-              "Authorization": "Bearer " + token,
-            }
-          }).then(r =>console.log(r))
-        }
-      }>
-        認証確認
-      </Button>
+      <div>
+        <TextField
+          id="standard-name"
+          label="ユーザー名"
+          className={classes.textField}
+          type="username"
+          value={username}
+          onChange={(e) => {SetUsername(e.target.value)}}
+          margin="normal"
+        />
+      </div>
+      <div>
+        <TextField
+          id="standard-name"
+          label="パスワード"
+          className={classes.textField}
+          type="password"
+          value={password}
+          onChange={(e) => {SetPassword(e.target.value)}}
+          margin="normal"
+        />
+      </div>
+      <div>
+        <Button variant="contained" className={classes.button} onClick={
+          () => {
+            signupUser({username, password})(props.dispatch);
+          }
+        }>
+          新規登録
+        </Button>
+        <Button variant="contained" className={classes.button} onClick={
+          () => {
+            loginUser({username, password})(props.dispatch);
+          }
+        }>
+          ログイン
+        </Button>
+        <Button variant="contained" className={classes.button} onClick={
+          () => {
+            api.testAuth().then(r =>console.log(r))
+          }
+        }>
+          認証確認
+        </Button>
+      </div>
     </form>
   </div>
 }
 LoginForm = withStyles(styles)(LoginForm);
+LoginForm = connect(
+  state => {
+    return { userData: state.userData }
+  },
+  null
+)(LoginForm)
 
 export default withStyles(styles)(Content);
