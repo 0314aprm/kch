@@ -1,0 +1,22 @@
+null api
+
+機能
+記事一覧	記事詳細
+新規		返信
+
+
+id	→gorm
+username	→user 
+title	→user
+content	→user
+parent_id	→
+created_at	→gorm
+
+
+
+
+api 
+返信api
+post	/api/v1/reply(/api/v1/posts/100/reply)
+request username content parent_id
+
