@@ -36,6 +36,7 @@ import { BrowserRouter, withRouter, Link } from "react-router-dom";
 import { connect } from 'react-redux';
 import jwt from "jsonwebtoken";
 import api from "./utils/api";
+import { format_date } from "./utils/others";
 import { loginUser, signupUser } from "./actions";
 
 const styles = theme => ({
@@ -110,14 +111,80 @@ const useStyles = makeStyles(theme => ({
 }));
 
 
+function getChildren(id, clbk) {
+  api.post.getChildren(id).then(r => {
+    clbk(r);
+  });
+}
+
+
+function CardChild(props) {
+  const [children, setChildren] = useState(false);
+  const { classes, data } = props;
+
+  return <Card className={classes.card}
+    style={{
+      position: "relative",
+      marginBottom: "50px",
+      borderLeft: "5px solid black"
+    }}
+  >
+    <div style={{
+        position: "absolute",
+        height: "100%",
+        width: "10px",
+        left: "-5px",
+      }}
+      onClick={() => {
+        setChildren(false)
+      }}
+    >
+
+    </div>
+  <CardHeader
+    avatar={
+      <Avatar aria-label="recipe" className={classes.avatar}>
+        R
+      </Avatar>
+    }
+    action={
+      <IconButton aria-label="settings">
+        <MoreVertIcon />
+      </IconButton>
+    }
+    title = {data.Title}
+    subheader= {format_date(data.CreatedAt)}
+  />
+    <CardContent>
+      <Typography paragraph>
+        {data.Content}
+      </Typography>
+      {
+        !props.childList && !children && <a onClick={() => {
+          getChildren(props.data.ID, setChildren);
+        }}>返信を読み込む</a>
+      }
+      {
+        (children || props.childList || []).map((v,i) => {
+          return <CardChild key={i} data={v}/>
+        })
+      }
+    </CardContent>
+  </Card>
+}
+CardChild = withStyles(styles)(CardChild);
+
+
 function SmartCard(props) {
   const {classes, info} = props;
   const v = info;
 
   const [expanded, setExpanded] = useState(false);
+  const [children, setChildren] = useState([]);
   
   const handleExpandClick = () => {
     setExpanded(!expanded);
+    getChildren(v.ID, setChildren);
   };
   return <Card className={classes.card} style={{marginBottom: "50px"}}>
     <CardHeader
@@ -131,8 +198,8 @@ function SmartCard(props) {
           <MoreVertIcon />
         </IconButton>
       }
-      title = {v.title}
-      subheader= {v.time}
+      title = {v.Title}
+      subheader= {format_date(v.CreatedAt)}
     />
     <CardActions disableSpacing>
       <IconButton aria-label="add to favorites">
@@ -150,11 +217,18 @@ function SmartCard(props) {
         <ExpandMoreIcon />
       </IconButton>
     </CardActions>
+    <CardContent>
+      <Typography paragraph>
+        {v.Content}
+      </Typography>
+    </CardContent>
     <Collapse in={expanded} timeout="auto" unmountOnExit>
       <CardContent>
-        <Typography paragraph>
-          {v.content}
-        </Typography>
+        {
+          children && children != [] && children.map((v,i) => {
+            return <CardChild key={i} data={v} childList={v.children}/>
+          })
+        }
       </CardContent>
     </Collapse>
   </Card>
@@ -174,6 +248,17 @@ function Content(props) {
   const [card,setCard] = useState([]);
   const classes_2 = useStyles();
 
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+
+  const fetchPosts = () => {
+    api.post.list().then(r => {
+      console.log(r)
+      setCard(r);
+    });
+  }
 
   const handleOpen = () => {
     setOpen(true);
@@ -217,7 +302,7 @@ function Content(props) {
       </AppBar>
       <div className={classes.contentWrapper}>
         {
-          contents.length === 0 ? 
+          card.length === 0 ? 
             <Typography color="textSecondary" align="center">まだ記事がありません</Typography> 
           :
           card.map((v,i) => {
