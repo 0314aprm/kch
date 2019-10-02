@@ -1,0 +1,31 @@
+
+React & Go
+Echo
+Gorm
+
+JWT
+
+
+投稿, 返信
+記事一覧, 記事詳細, 新規
+
+
+# 動作
+投稿 -> 記事一覧
+
+
+# 記事
+id
+username
+title
+content
+parent_id
+created_at
+
+
+# API
+/reply/
+	username, parent_id, content
+
+
+
