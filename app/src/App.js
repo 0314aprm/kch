@@ -32,6 +32,7 @@ import Button from '@material-ui/core/Button';
 import { ButtonBase } from '@material-ui/core';
 import MenuItem from "@material-ui/core/MenuItem";
 
+import { BrowserRouter, withRouter, Link } from "react-router-dom";
 import { connect } from 'react-redux';
 import jwt from "jsonwebtoken";
 import api from "./utils/api";
@@ -206,9 +207,12 @@ function Content(props) {
       <AppBar className={classes.searchBar} position="static" color="default" elevation={0}>
         <Toolbar>
           <BottomNavigation value={value} onChange={(e) => {setValue(e.target.value);}} className={classes_2.root}>
-            <BottomNavigationAction label="Home" value="home" icon={<HomeIcon />} />
-            <BottomNavigationAction label="Favorites" value="favorites" icon={<FavoriteIcon />} />
+            <BottomNavigationAction label="Home" value="home" icon={<HomeIcon />} onClick={() => {props.history.push("/home");}} />
+            <BottomNavigationAction label="Favorites" value="favorites" icon={<FavoriteIcon />} onClick={() => {props.history.push("/favorites");}} />
           </BottomNavigation>
+          <div>
+            {props.userData.username || "poop"}
+          </div>
         </Toolbar>
       </AppBar>
       <div className={classes.contentWrapper}>
@@ -297,10 +301,15 @@ function Content(props) {
     </Paper>
   );
 }
-
 Content.propTypes = {
   classes: PropTypes.object.isRequired,
 };
+Content = connect(
+  state => {
+    return { userData: state.userData }
+  },
+  null
+)(withRouter(withStyles(styles)(Content)));
 
 function LoginForm(props) {
   const {classes} = props;
@@ -379,9 +388,9 @@ LoginForm = connect(
 
 function MyPage(props) {
   return <div>
-    
+
   </div>
 }
 
 
-export default withStyles(styles)(Content);
+export default Content;
