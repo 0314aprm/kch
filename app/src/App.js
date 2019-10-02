@@ -28,6 +28,8 @@ import ShareIcon from '@material-ui/icons/Share';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Modal from "@material-ui/core/Modal";
+import { ButtonBase } from '@material-ui/core';
+import MenuItem from "@material-ui/core/MenuItem";
 
 
 const styles = theme => ({
@@ -64,6 +66,7 @@ const useStyles = makeStyles(theme => ({
   },
   addButton: {
     color: blue[600],
+    fontSize: "1em",
   },
   bottomNav: {
     position: "fixed",
@@ -125,11 +128,6 @@ function SmartCard(props) {
       title = {v.title}
       subheader= {v.time}
     />
-    <CardContent>
-      <Typography variant="body2" color="textSecondary" component="p">
-        １投稿目の最初の行
-      </Typography>
-    </CardContent>
     <CardActions disableSpacing>
       <IconButton aria-label="add to favorites">
         <FavoriteIcon />
@@ -149,9 +147,7 @@ function SmartCard(props) {
     <Collapse in={expanded} timeout="auto" unmountOnExit>
       <CardContent>
         <Typography paragraph>
-          文~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          {v.content}
         </Typography>
       </CardContent>
     </Collapse>
@@ -163,34 +159,16 @@ function rand() {
   return Math.round(Math.random() * 20) - 10;
 }
 
-function getModalStyle() {
-  const top = 50 + rand();
-  const left = 50 + rand();
-
-  return {
-    top: `${top}%`,
-    left: `${left}%`,
-    //ソースコードであったけど`${left}%`この書き方が分からないjquery？
-    //多分modalopenした時のポップアップの位置だと思うんだけどちがうかな
-    transform: `translate(-${top}%, -${left}%)`,
-  };
-  //ここはなに？どこからとってきたの？
-  //classes.paperがないからだとおもう
-}
-//https://material-ui.com/ja/components/modal/
-//simplemodal
-
-
-
 
 function Content(props) {
   const { classes } = props;
-  const [modalStyle] = React.useState(getModalStyle);
   const [open,setOpen] = React.useState(false);
   const [contents, setContents] = useState([]);
+  const [titles,setTitles] = useState([]);
   const [value, setValue] = useState("");
   const [posted,setPosted] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [contentText, setContentText] = useState("");
   const [card,setCard] = useState([]);
   const classes_2 = useStyles();
 
@@ -210,14 +188,17 @@ function Content(props) {
     newContent.push(text);
     setContents(newContent);
   }
+  function addTitle(text) {
+    var newTitle = Array.from(titles);
+    newTitle.push(text);
+    setTitles(newTitle);
+  }
 
   function addCard(newcard) {
-    // ここの引数はカード単体だよ
     var newCard = Array.from(card);
     newCard.push(newcard);
     setCard(newCard);
   }
-//card = [ {title: "こんにちは", content: "hellow world!"}, {title: "kodwa"}, ]
   return (
     <Paper className={classes.paper}>
       <AppBar className={classes.searchBar} position="static" color="default" elevation={0}>
@@ -248,26 +229,48 @@ function Content(props) {
         aria-describedby="simple-modal-description"
         open={open}
         onClose={handleClose}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        <div style={modalStyle} className={classes_2.paper}>
+        <div className={classes_2.paper}>
           <TextField 
             fullWidth
-            placeholder="記事を追加しよう"
+            placeholder="タイトルを追加してください"
             className = {classes.textField}
             value = {searchText}
-            onChange={(e) => {setSearchText(e.target.value);}}
+            onChange={(e) => {
+                setSearchText(e.target.value);
+              }
+            }
             onKeyDown={(e) => {
               if(e.keyCode !== 13){
                 return false;
               }
-              addContent(searchText);
-              setSearchText(""); 
-              addCard({"title": searchText, "content": "hellow world!","time": Date(Date.now())}); 
+              addTitle(searchText);
+              addContent(contentText);
+              setSearchText("");
+              setContentText(""); 
+              addCard({"title": searchText, "content": contentText,"time": Date(Date.now())}); 
+              handleClose();
             }}  
           />
-          <p id="simple-modal-description">
-            Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
-          </p>
+          <TextField
+            id="outlined-multiline-static"
+            label="Multiline"
+            multiline
+            rows="4"
+            value = {contentText}
+            onChange={(e) => {
+              setContentText(e.target.value);
+            }
+          }
+            className={classes.textField}
+            margin="normal"
+            variant="outlined"
+          />       
         </div>
       </Modal>
     </div>
@@ -277,6 +280,15 @@ function Content(props) {
       className={classes_2.bottomNav}
       icon={<AddCircleIcon className={classes_2.addButton} onClick = {handleOpen} />}
     />
+    {/*
+    <ButtonBase component={
+      <div>
+        adwokwdoko
+        dwad
+      </div>
+    }>
+    </ButtonBase>
+    */}
     </Paper>
   );
 }
@@ -286,3 +298,6 @@ Content.propTypes = {
 };
 
 export default withStyles(styles)(Content);
+
+//ぼわんてやっぱりなんとかならない？
+//たぶんいけそう
