@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import AppBar from '@material-ui/core/AppBar';
 import { makeStyles } from '@material-ui/core/styles';
@@ -29,11 +29,17 @@ import ShareIcon from '@material-ui/icons/Share';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Modal from "@material-ui/core/Modal";
+import Button from '@material-ui/core/Button';
 import { ButtonBase } from '@material-ui/core';
 import MenuItem from "@material-ui/core/MenuItem";
 import Fab from '@material-ui/core/Fab';
-import Button from '@material-ui/core/Button';
 
+import { BrowserRouter, withRouter, Link } from "react-router-dom";
+import { connect } from 'react-redux';
+import jwt from "jsonwebtoken";
+import api from "./utils/api";
+import { format_date } from "./utils/others";
+import { loginUser, signupUser } from "./actions";
 
 const styles = theme => ({
   paper: {
@@ -111,12 +117,80 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
+
+function getChildren(id, clbk) {
+  api.post.getChildren(id).then(r => {
+    clbk(r);
+  });
+}
+
+
+function CardChild(props) {
+  const [children, setChildren] = useState(false);
+  const { classes, data } = props;
+
+  return <Card className={classes.card}
+    style={{
+      position: "relative",
+      marginBottom: "50px",
+      borderLeft: "5px solid black"
+    }}
+  >
+    <div style={{
+        position: "absolute",
+        height: "100%",
+        width: "10px",
+        left: "-5px",
+      }}
+      onClick={() => {
+        setChildren(false)
+      }}
+    >
+
+    </div>
+  <CardHeader
+    avatar={
+      <Avatar aria-label="recipe" className={classes.avatar}>
+        R
+      </Avatar>
+    }
+    action={
+      <IconButton aria-label="settings">
+        <MoreVertIcon />
+      </IconButton>
+    }
+    title = {data.Title}
+    subheader= {format_date(data.CreatedAt)}
+  />
+    <CardContent>
+      <Typography paragraph>
+        {data.Content}
+      </Typography>
+      {
+        !props.childList && !children && <a onClick={() => {
+          getChildren(props.data.ID, setChildren);
+        }}>返信を読み込む</a>
+      }
+      {
+        (children || props.childList || []).map((v,i) => {
+          return <CardChild key={i} data={v}/>
+        })
+      }
+    </CardContent>
+  </Card>
+}
+CardChild = withStyles(styles)(CardChild);
+
+
 function SmartCard(props) {
   const {classes, info} = props;
   const v = info;
   const [expanded, setExpanded] = useState(false);
+  const [children, setChildren] = useState([]);
+  
   const handleExpandClick = () => {
     setExpanded(!expanded);
+    getChildren(v.ID, setChildren);
   };
   return <Card className={classes.card} style={{marginBottom: "50px"}}>
     <CardHeader
@@ -130,8 +204,8 @@ function SmartCard(props) {
           <MoreVertIcon />
         </IconButton>
       }
-      title = {v.title}
-      subheader= {v.time}
+      title = {v.Title}
+      subheader= {format_date(v.CreatedAt)}
     />
     <CardActions disableSpacing>
       <IconButton aria-label="add to favorites">
@@ -149,20 +223,23 @@ function SmartCard(props) {
         <ExpandMoreIcon />
       </IconButton>
     </CardActions>
+    <CardContent>
+      <Typography paragraph>
+        {v.Content}
+      </Typography>
+    </CardContent>
     <Collapse in={expanded} timeout="auto" unmountOnExit>
       <CardContent>
-        <Typography paragraph>
-          {v.content}
-        </Typography>
+        {
+          children && children != [] && children.map((v,i) => {
+            return <CardChild key={i} data={v} childList={v.children}/>
+          })
+        }
       </CardContent>
     </Collapse>
   </Card>
 }
 SmartCard = withStyles(styles)(SmartCard);
-
-function rand() {
-  return Math.round(Math.random() * 20) - 10;
-}
 
 
 function Content(props) {
@@ -176,6 +253,18 @@ function Content(props) {
   const [contentText, setContentText] = useState("");
   const [card,setCard] = useState([]);
   const classes_2 = useStyles();
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+
+  const fetchPosts = () => {
+    api.post.list().then(r => {
+      console.log(r)
+      setCard(r);
+    });
+  }
 
   const handleOpen = () => {
     setOpen(true);
@@ -209,14 +298,17 @@ function Content(props) {
       <AppBar className={classes.searchBar} position="static" color="default" elevation={0}>
         <Toolbar>
           <BottomNavigation value={value} onChange={(e) => {setValue(e.target.value);}} className={classes_2.root}>
-            <BottomNavigationAction label="Home" value="home" icon={<HomeIcon />} />
-            <BottomNavigationAction label="Favorites" value="favorites" icon={<FavoriteIcon />} />
+            <BottomNavigationAction label="Home" value="home" icon={<HomeIcon />} onClick={() => {props.history.push("/home");}} />
+            <BottomNavigationAction label="Favorites" value="favorites" icon={<FavoriteIcon />} onClick={() => {props.history.push("/favorites");}} />
           </BottomNavigation>
+          <div>
+            {props.userData.username || "poop"}
+          </div>
         </Toolbar>
       </AppBar>
       <div className={classes.contentWrapper}>
         {
-          contents.length === 0 ? 
+          card.length === 0 ? 
             <Typography color="textSecondary" align="center">まだ記事がありません</Typography> 
           :
           card.map((v,i) => {
@@ -295,6 +387,9 @@ function Content(props) {
       className={classes_2.bottomNav}
       icon={<AddCircleIcon className={classes_2.addButton} onClick = {handleOpen} />}
     />
+
+
+    <LoginForm/>
     {/*
     <ButtonBase component={
       <div>
@@ -307,9 +402,95 @@ function Content(props) {
     </Paper>
   );
 }
-
 Content.propTypes = {
   classes: PropTypes.object.isRequired,
 };
+Content = connect(
+  state => {
+    return { userData: state.userData }
+  },
+  null
+)(withRouter(withStyles(styles)(Content)));
 
-export default withStyles(styles)(Content);
+function LoginForm(props) {
+  const {classes} = props;
+
+  const [username, SetUsername] = useState("");
+  const [password, SetPassword] = useState("");
+  
+  useEffect(() => {
+    api.post.list().then(r => {
+      console.log(r);
+    })
+  }, []);
+
+  return <div>
+    <div>
+      username:
+      {props.userData.username}
+    </div>
+    <form className={classes.container} noValidate autoComplete="off">
+      <div>
+        <TextField
+          id="standard-name"
+          label="ユーザー名"
+          className={classes.textField}
+          type="username"
+          value={username}
+          onChange={(e) => {SetUsername(e.target.value)}}
+          margin="normal"
+        />
+      </div>
+      <div>
+        <TextField
+          id="standard-name"
+          label="パスワード"
+          className={classes.textField}
+          type="password"
+          value={password}
+          onChange={(e) => {SetPassword(e.target.value)}}
+          margin="normal"
+        />
+      </div>
+      <div>
+        <Button variant="contained" className={classes.button} onClick={
+          () => {
+            signupUser({username, password})(props.dispatch);
+          }
+        }>
+          新規登録
+        </Button>
+        <Button variant="contained" className={classes.button} onClick={
+          () => {
+            loginUser({username, password})(props.dispatch);
+          }
+        }>
+          ログイン
+        </Button>
+        <Button variant="contained" className={classes.button} onClick={
+          () => {
+            api.testAuth().then(r =>console.log(r))
+          }
+        }>
+          認証確認
+        </Button>
+      </div>
+    </form>
+  </div>
+}
+LoginForm = withStyles(styles)(LoginForm);
+LoginForm = connect(
+  state => {
+    return { userData: state.userData }
+  },
+  null
+)(LoginForm)
+
+
+function MyPage(props) {
+  return <div>
+
+  </div>
+}
+
+export default Content;
