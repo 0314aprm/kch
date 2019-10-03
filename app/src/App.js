@@ -13,6 +13,7 @@ import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import FavoriteIcon from '@material-ui/icons/Favorite';
 import HomeIcon from '@material-ui/icons/Home';
 import AddCircleIcon from '@material-ui/icons/AddCircle';
+import SendIcon from '@material-ui/icons/Send';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
@@ -30,6 +31,8 @@ import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Modal from "@material-ui/core/Modal";
 import { ButtonBase } from '@material-ui/core';
 import MenuItem from "@material-ui/core/MenuItem";
+import Fab from '@material-ui/core/Fab';
+import Button from '@material-ui/core/Button';
 
 
 const styles = theme => ({
@@ -60,7 +63,6 @@ const useStyles = makeStyles(theme => ({
     position: "absolute",
     width: 400,
     backgroundColor: theme.palette.background.paper,
-//    border: "2px solid #000",
     boxShadow: theme.shadows[5],
     padding: theme.spacing(2,4,3),
   },
@@ -73,6 +75,9 @@ const useStyles = makeStyles(theme => ({
     bottom: "0.4em",
     right: "0.4em",
     fontSize: "5em",
+  },
+  postbutton: {
+    right: 0,
   },
   root: {
     width:1000,
@@ -101,15 +106,15 @@ const useStyles = makeStyles(theme => ({
   avatar: {
     backgroundColor: red[500],
   },
+  contentBox: {
+    width: "100%"
+  },
 }));
-
 
 function SmartCard(props) {
   const {classes, info} = props;
   const v = info;
-
   const [expanded, setExpanded] = useState(false);
-  
   const handleExpandClick = () => {
     setExpanded(!expanded);
   };
@@ -222,8 +227,6 @@ function Content(props) {
         }          
       </div>
       <div>
-
-      {/*<BottomNavigation value={value} onChange={(e) => {setValue(e.target.value);}} className={classes_2.root}>*/}
       <Modal
         aria-labelledby="simple-modal-title"
         aria-describedby="simple-modal-description"
@@ -235,7 +238,7 @@ function Content(props) {
           justifyContent: 'center',
         }}
       >
-        <div className={classes_2.paper}>
+        <div className={classes_2.paper} >
           <TextField 
             fullWidth
             placeholder="タイトルを追加してください"
@@ -268,11 +271,23 @@ function Content(props) {
             }
           }
             className={classes.textField}
+            style={{
+              width: "100%"
+            }}
             margin="normal"
             variant="outlined"
-          />       
+          />
+          <div style={{width: "100%", display: "flex", justifyContent: "flex-end"}}>
+            <Button
+              variant="contained"
+              color="primary"
+              className={classes.button}
+            >
+              送信
+            </Button>
+          </div>
         </div>
-      </Modal>
+        </Modal>
     </div>
     <BottomNavigationAction
       label="Addcicle" 
@@ -298,6 +313,3 @@ Content.propTypes = {
 };
 
 export default withStyles(styles)(Content);
-
-//ぼわんてやっぱりなんとかならない？
-//たぶんいけそう
